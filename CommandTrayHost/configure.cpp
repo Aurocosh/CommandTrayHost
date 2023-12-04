@@ -2932,15 +2932,14 @@ void disable_enable_menu(nlohmann::json& jsp, HANDLE ghJob, bool runas_admin)
 	bool is_enabled = jsp["enabled"];
 	std::string name = jsp["name"];
 
-	std::wstring toastTitle = is_enabled ? L"Program is disabled" : L"Program is enabled";
+	std::wstring toastText = is_enabled ? L"Program is disabled: " : L"Program is enabled: ";
 
 	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 	std::wstring toastName = converter.from_bytes(name);
 
 	WinToastHandler* handler = new WinToastHandler;
 	WinToastTemplate templ = WinToastTemplate(WinToastTemplate::Text01);
-	templ.setTextField(toastTitle, WinToastTemplate::FirstLine);
-	templ.setTextField(toastName, WinToastTemplate::SecondLine);
+	templ.setTextField(toastText + toastName, WinToastTemplate::FirstLine);
 	templ.setDuration(WinToastTemplate::Duration::Short);
 
 	const auto toast_id = WinToast::instance()->showToast(templ, handler);
