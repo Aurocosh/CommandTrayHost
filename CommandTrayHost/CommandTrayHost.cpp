@@ -9,6 +9,7 @@
 #include "admin_singleton.h"
 #include "cron.h"
 #include "shutdownblock.h"
+#include <wintoastlib.h>
 
 #ifdef _DEBUG
 #include "test.hpp"
@@ -21,6 +22,8 @@ extern WINBASEAPI HWND WINAPI GetConsoleWindow();
 #else
 extern "C" WINBASEAPI HWND WINAPI GetConsoleWindow();
 #endif
+
+using WinToastLib::WinToast;
 
 nlohmann::json global_stat;
 nlohmann::json* global_cache_configs_pointer;
@@ -1374,6 +1377,18 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 	makeSingleInstance3();
 	SetEenvironment();
 	//ParseProxyList();
+
+	if (!WinToast::isCompatible()) {
+		LOGMESSAGE(L"Error, your system in not supported!\n");
+	}
+
+	WinToast::instance()->setAppName(L"CommandTrayHost");
+	const auto aumi = WinToast::configureAUMI(L"rexdf", L"CommandTrayHost", L"CommandTrayHost", VERSION_NUMS);
+	WinToast::instance()->setAppUserModelId(aumi);
+
+	if (!WinToast::instance()->initialize()) {
+		LOGMESSAGE(L"Error, could not initialize the lib!\n");
+	}
 
 	MyRegisterClass(hInstance);
 	if (!InitInstance(hInstance, SW_HIDE))

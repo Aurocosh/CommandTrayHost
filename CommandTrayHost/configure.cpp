@@ -5,6 +5,7 @@
 #include "language.h"
 #include "cache.h"
 #include "cron.h"
+#include <wintoastlib.h>
 
 
 extern bool is_runas_admin;
@@ -52,6 +53,21 @@ extern TCHAR szPathToExeToken[MAX_PATH * 10];
 extern TCHAR szPathToExeDir[MAX_PATH * 10];
 //extern WCHAR szWindowClass[36];
 //extern HINSTANCE hInst;
+
+
+using WinToastLib::WinToast;
+using WinToastLib::WinToastTemplate;
+using WinToastLib::IWinToastHandler;
+
+class WinToastHandler : public IWinToastHandler
+{
+public:
+	WinToastHandler() {}
+	void toastActivated() const override {}
+	void toastActivated(int actionIndex) const override {}
+	void toastDismissed(WinToastDismissalReason state) const override {}
+	void toastFailed() const override {}
+};
 
 bool initial_configure()
 {
@@ -602,7 +618,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 			LOGMESSAGE(L"%S is empty, now remove it!\n", name);
 		}
 		return true;
-	};
+		};
 
 	/*PCSTR size_postion_strs[] = {
 		"position",
@@ -655,12 +671,12 @@ rapidjson::SizeType configure_reader(std::string& out)
 			//return false;
 		}
 		return false;
-	};
+		};
 	auto lambda_check_alpha = [](const Value& val, PCSTR name)->bool {
 		int v = val[name].GetInt();
 		LOGMESSAGE(L"lambda! getint:%d", v);
 		return v >= 0 && v < 256;
-	};
+		};
 
 	SizeType cnt = 0;
 
@@ -710,7 +726,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 		config_hotkey_items_idx++;
 		current_hotkey_success = false;
 		return true;
-	};
+		};
 	auto lambda_config_hotkey = [&show_hotkey_in_menu, &cnt, &config_hotkey_items_idx, &current_hotkey_success](Value& val, PCSTR name)->bool {
 		/*int id = WM_TASKBARNOTIFY_MENUITEM_COMMAND_BASE + 0x10 * cnt;
 		if (0 == config_hotkey_items_idx)
@@ -746,7 +762,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 		);
 		//config_hotkey_items_idx++;
 		return true;
-	};
+		};
 
 	auto lambda_remove_menu = [&allocator](Value& val, PCSTR name)->bool {
 		if (val.HasMember(name))
@@ -757,7 +773,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 		}
 		val.AddMember(Value{}.SetString(name, allocator), Value{}.SetArray(), allocator);
 		return true;
-	};
+		};
 
 	const RapidJsonObjectChecker config_hotkey_items[] = {
 		{ "hide_show", iStringType, true, lambda_config_hotkey, lambda_config_hotkey_items_idx },
@@ -864,7 +880,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 			}
 		}
 		return true;
-	};
+		};
 	LOGMESSAGE(L"enable_hot_reload:%d\n", enable_hot_reload);
 
 	//type check for items in configs
@@ -987,7 +1003,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 			}
 		}
 		return true;
-	};
+		};
 	int global_hotkey_idx = 0;
 	auto lambda_global_hotkey_idx = [&global_menu, &configs_menu, &global_hotkey_idx, &current_hotkey_success, &allocator, &d](Value& val, PCSTR name)->bool {
 		const int index_of_left_click = 7;
@@ -1019,7 +1035,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 		global_hotkey_idx++;
 		current_hotkey_success = false;
 		return true;
-	};
+		};
 	auto lambda_global_hotkey = [&show_hotkey_in_menu, &global_hotkey_idx, &current_hotkey_success](const Value& val, PCSTR name)->bool {
 		/*const int global_hotkey_idxs[] = {
 			WM_TASKBARNOTIFY_MENUITEM_DISABLEALL , // order is important, commandtrayhost marked word: 4bfsza3ay
@@ -1047,7 +1063,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 		}
 		LOGMESSAGE(L"%s ret:%d\n", utf8_to_wstring(val[name].GetString()).c_str(), ret);
 		return true;
-	};
+		};
 
 	const RapidJsonObjectChecker global_hotkey_itms[] = { // order is important, commandtrayhost marked word: 4bfsza3ay
 		{ "disable_all", iStringType, true, lambda_global_hotkey, lambda_global_hotkey_idx },
@@ -1106,11 +1122,11 @@ rapidjson::SizeType configure_reader(std::string& out)
 		if (cache_option_pointer_idx < cache_options_numbers)cache_cnt++;
 		//cache_option_pointer_idx++;
 		return true;
-	};
+		};
 	auto lambda_cache_option_value_pointer_idx = [&cache_option_pointer_idx](const Value& val, PCSTR name)->bool {
 		cache_option_pointer_idx++;
 		return true;
-	};
+		};
 
 
 	// type check for global optional items
@@ -1349,8 +1365,8 @@ rapidjson::SizeType configure_reader(std::string& out)
 			if (val.HasMember(name))val.RemoveMember(name);
 			return true;
 		} },
-			//{ "enable_crontab", iBoolType, true, nullptr },
-			//{ "crontabs", iArrayType, true, nullptr }
+		//{ "enable_crontab", iBoolType, true, nullptr },
+		//{ "crontabs", iArrayType, true, nullptr }
 	};
 
 	if (false == check_rapidjson_object(
@@ -1451,7 +1467,7 @@ rapidjson::SizeType configure_reader(std::string& out)
 							}},
 							//#ifdef _DEBUG
 														{ "name", iStringType, true, nullptr },
-								//#endif
+							//#endif
 						};
 						for (auto& m : d_cache["configs"].GetArray())
 						{
@@ -1803,7 +1819,7 @@ bool type_check_groups(const nlohmann::json& root, int deep)
 		{
 			bool has_name = json_object_has_member(m, "name");
 			if (!has_name ||  //have no name field
-							  //(has_name && !(m["name"].is_string())) // name field is not a string
+				//(has_name && !(m["name"].is_string())) // name field is not a string
 				!(m["name"].is_string()) // name field is not a string, has_name must be true
 				)
 			{
@@ -2914,6 +2930,24 @@ void create_process(
 void disable_enable_menu(nlohmann::json& jsp, HANDLE ghJob, bool runas_admin)
 {
 	bool is_enabled = jsp["enabled"];
+	std::string name = jsp["name"];
+
+	std::wstring toastTitle = is_enabled ? L"Program is disabled" : L"Program is enabled";
+
+	std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+	std::wstring toastName = converter.from_bytes(name);
+
+	WinToastHandler* handler = new WinToastHandler;
+	WinToastTemplate templ = WinToastTemplate(WinToastTemplate::Text01);
+	templ.setTextField(toastTitle, WinToastTemplate::FirstLine);
+	templ.setTextField(toastName, WinToastTemplate::SecondLine);
+	templ.setDuration(WinToastTemplate::Duration::Short);
+
+	const auto toast_id = WinToast::instance()->showToast(templ, handler);
+	if (toast_id < 0) {
+		LOGMESSAGE(L"Error: Could not launch your toast notification!\n");
+	}
+
 	if (false == runas_admin && is_enabled)
 	{
 		bool is_running = jsp["running"];
@@ -2938,7 +2972,6 @@ void disable_enable_menu(nlohmann::json& jsp, HANDLE ghJob, bool runas_admin)
 			DWORD timeout = jsp.value("kill_timeout", 200);
 			bool kill_process_tree = jsp.value("kill_process_tree", false);
 #ifdef _DEBUG
-			std::string name = jsp["name"];
 			check_and_kill(reinterpret_cast<HANDLE>(handle), static_cast<DWORD>(pid), timeout, utf8_to_wstring(name).c_str(), kill_process_tree);
 #else
 			check_and_kill(reinterpret_cast<HANDLE>(handle), static_cast<DWORD>(pid), timeout, kill_process_tree);
@@ -3169,7 +3202,7 @@ void select_file(nlohmann::json& jsp)
 					v.push_back(ILCreateFromPath(commandLine));
 
 					SHOpenFolderAndSelectItems(folder, static_cast<UINT>(v.size()),
-					                           const_cast<LPCITEMIDLIST*>(v.data()), 0);
+						const_cast<LPCITEMIDLIST*>(v.data()), 0);
 
 					for (auto idl : v)
 					{
